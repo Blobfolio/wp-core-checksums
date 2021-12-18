@@ -15,18 +15,41 @@ All you need to do is:
 2. `cd` to the root directory of the WordPress installation;
 3. Run the corresponding program for verifying checksums;
 
-The syntax for #3 can vary by operating system, but usually looks like this:
+## Downloading
+
+All checksum files are named after their corresponding WordPress version, with an extension of `b3`, `md5`, `sha256`, or `sha512` denoting the hash format (Blake3, MD5, SHA256, or SHA512 hashes respectively).
 
 ```bash
+# Example:
+# Download Blake3 hashes for WP 5.8.2
+wget -q -O 5.8.2.b3 \
+    https://raw.githubusercontent.com/Blobfolio/wp-core-checksums/main/chk/5.8.2.b3
+```
+
+Alternatively, you could clone the entire repository, but beware it is rather large; there have been a fair few WordPress releases over the years!
+
+```bash
+git clone https://github.com/Blobfolio/wp-core-checksums.git
+```
+
+## Verifying
+
+Application syntax can vary by operating system, but usually looks like this:
+
+```bash
+# All paths are relative. Start in your WP installation's
+# root directory, i.e. where wp-load.php lives.
+cd /path/to/wp
+
 # Blake3
-b3sum -c /path/to/version.b3
+b3sum -c /path/to/VERSION.b3
 
 # MD5
-md5sum -c /path/to/version.md5
+md5sum -c /path/to/VERSION.md5
 
 # SHA256
-sha256sum -c /path/to/version.sha256
+sha256sum -c /path/to/VERSION.sha256
 
 # SHA512
-sha512sum -c /path/to/version.sha512
+sha512sum -c /path/to/VERSION.sha512
 ```
