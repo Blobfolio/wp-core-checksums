@@ -2,7 +2,7 @@
 
 The [`chk`](https://github.com/Blobfolio/wp-core-checksums/tree/master/chk) directory contains file checksum lists for every WordPress [release](https://wordpress.org/download/releases/) in the following formats:
 
-* Blake3
+* [Blake3](https://github.com/BLAKE3-team/BLAKE3)
 * MD5
 * SHA256
 * SHA512
