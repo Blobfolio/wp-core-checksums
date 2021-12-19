@@ -145,11 +145,42 @@ _hash-core VERSION:
 	ROOT="$( find "{{ tmp_dir }}/extract/" -mindepth 1 -maxdepth 1 -type d | head -n 1 )"
 
 	if [ ! -z "$ROOT" ]; then
+		# Get rid of bundled plugins and themes, and the sample config.
+		[ ! -f "$ROOT/wp-config-sample.php" ] || rm "$ROOT/wp-config-sample.php"
+		if [ -d "$ROOT/wp-content/plugins" ]; then
+			if [ -f "$ROOT/wp-content/plugins/index.php" ]; then
+				mv "$ROOT/wp-content/plugins/index.php" "{{ tmp_dir }}/index.php"
+				rm -rf "$ROOT/wp-content/plugins"
+				mkdir "$ROOT/wp-content/plugins"
+				mv "{{ tmp_dir }}/index.php" "$ROOT/wp-content/plugins/index.php"
+			else
+				rm -rf "$ROOT/wp-content/plugins"
+			fi
+		fi
+		if [ -d "$ROOT/wp-content/themes" ]; then
+			if [ -f "$ROOT/wp-content/themes/index.php" ]; then
+				mv "$ROOT/wp-content/themes/index.php" "{{ tmp_dir }}/index.php"
+				rm -rf "$ROOT/wp-content/themes"
+				mkdir "$ROOT/wp-content/themes"
+				mv "{{ tmp_dir }}/index.php" "$ROOT/wp-content/themes/index.php"
+			else
+				rm -rf "$ROOT/wp-content/themes"
+			fi
+		fi
+
 		cd "$ROOT"
+
+		# Generate checksums.
 		find . -type f -print0 | sort -z | xargs -0 b3sum > "{{ chk_dir }}/{{ VERSION }}.b3"
 		find . -type f -print0 | sort -z | xargs -0 md5sum > "{{ chk_dir }}/{{ VERSION }}.md5"
 		find . -type f -print0 | sort -z | xargs -0 sha256sum > "{{ chk_dir }}/{{ VERSION }}.sha256"
 		find . -type f -print0 | sort -z | xargs -0 sha512sum > "{{ chk_dir }}/{{ VERSION }}.sha512"
+
+		# Strip leading ./ from paths.
+		sd -s " ./" " " "{{ chk_dir }}/{{ VERSION }}.b3"
+		sd -s " ./" " " "{{ chk_dir }}/{{ VERSION }}.md5"
+		sd -s " ./" " " "{{ chk_dir }}/{{ VERSION }}.sha256"
+		sd -s " ./" " " "{{ chk_dir }}/{{ VERSION }}.sha512"
 	fi
 
 	cd "{{ justfile_directory() }}"
@@ -181,6 +212,7 @@ _prereq:
 	just _prereq-app md5sum || exit 1
 	just _prereq-app sha256sum || exit 1
 	just _prereq-app sha512sum || exit 1
+	just _prereq-app sd || exit 1
 	just _prereq-app wget || exit 1
 
 	exit 0
