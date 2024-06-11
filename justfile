@@ -8,6 +8,10 @@ tmp_dir   := "/tmp/wp-core-checksums"
 
 
 
+# Build and Clean.
+default: build clean
+
+
 # Build!
 @build: _prereq
 	just _download-list
