@@ -33,6 +33,7 @@ default: build clean
 
 # Clean Cache.
 @clean: _prereq
+	echo "Cleaning Up…"
 	find "{{ cache_dir }}" -type f -delete
 
 
