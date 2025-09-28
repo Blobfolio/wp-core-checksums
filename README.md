@@ -25,7 +25,7 @@ The complete list of supported versions is available [here](https://raw.githubus
 # Example:
 # Download Blake3 hashes for WP 5.8.2
 wget -q -O 5.8.2.b3 \
-    https://raw.githubusercontent.com/Blobfolio/wp-core-checksums/main/chk/5.8.2.b3
+    https://raw.githubusercontent.com/Blobfolio/wp-core-checksums/main/chk/5/5.8.2.b3
 ```
 
 Alternatively, you could clone the entire repository, but beware it is rather large; there have been a fair few WordPress releases over the years!

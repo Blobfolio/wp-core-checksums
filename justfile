@@ -37,9 +37,24 @@ default: build clean
 	find "{{ cache_dir }}" -type f -delete
 
 
+# Checksum Directory.
+_chk-dir VERSION:
+	#!/usr/bin/env bash
+	set -e
+
+	if [[ "{{ VERSION }}" =~ ^[0-9]+\. ]]; then
+		echo -n "{{ chk_dir }}/$( echo "{{ VERSION }}" | cut -d. -f1 )"
+		exit 0
+	fi
+
+	echo "Version doesn't look right: {{ VERSION }}"
+	exit 1
+
+
 # Fetch Release List.
 _download-list:
 	#!/usr/bin/env bash
+	set -e
 
 	# Already have it?
 	if [ -f "{{ tmp_dir }}/list.txt" ]; then
@@ -62,7 +77,8 @@ _download-list:
 		FILE="$( basename "$URL" )"
 		VERSION="${FILE%%.zip}"
 		VERSION="${VERSION:10}"
-		if [ ! -f "{{ chk_dir }}/$VERSION.md5" ]; then
+		DIR="$( just _chk-dir "$VERSION" )"
+		if [ ! -f "$DIR/$VERSION.md5" ]; then
 			echo "$URL" >> "{{ tmp_dir }}/list.txt"
 		fi
 	done <"{{ tmp_dir }}/list2.txt"
@@ -76,6 +92,7 @@ _download-list:
 # Fetch Packages.
 _download-cores:
 	#!/usr/bin/env bash
+	set -e
 
 	# Already have everything?
 	if [ ! -f "{{ tmp_dir }}/list.txt" ]; then
@@ -106,6 +123,7 @@ _download-cores:
 # Generate the Hashes!
 _hash-cores:
 	#!/usr/bin/env bash
+	set -e
 
 	# Already have everything?
 	if [ ! -f "{{ tmp_dir }}/list.txt" ]; then
@@ -127,6 +145,7 @@ _hash-cores:
 # Generate the Hashes (Single)!
 _hash-core VERSION:
 	#!/usr/bin/env bash
+	set -e
 
 	if [ ! -f "{{ cache_dir }}/{{ VERSION }}.zip" ]; then
 		echo "Invalid version: {{ VERSION }}"
@@ -134,10 +153,11 @@ _hash-core VERSION:
 	fi
 
 	# Skip it? If we already have all the checksums, there's nothing to do.
-	if [ -f "{{ chk_dir }}/{{ VERSION }}.b3" ]; then
-		if [ -f "{{ chk_dir }}/{{ VERSION }}.md5" ]; then
-			if [ -f "{{ chk_dir }}/{{ VERSION }}.sha256" ]; then
-				if [ -f "{{ chk_dir }}/{{ VERSION }}.sha512" ]; then
+	DIR="$( just _chk-dir "{{ VERSION }}" )"
+	if [ -f "$DIR/{{ VERSION }}.b3" ]; then
+		if [ -f "$DIR/{{ VERSION }}.md5" ]; then
+			if [ -f "$DIR/{{ VERSION }}.sha256" ]; then
+				if [ -f "$DIR/{{ VERSION }}.sha512" ]; then
 					exit 0
 				fi
 			fi
@@ -179,16 +199,17 @@ _hash-core VERSION:
 		cd "$ROOT"
 
 		# Generate checksums.
-		find . -type f -print0 | sort -z | xargs -0 b3sum > "{{ chk_dir }}/{{ VERSION }}.b3"
-		find . -type f -print0 | sort -z | xargs -0 md5sum > "{{ chk_dir }}/{{ VERSION }}.md5"
-		find . -type f -print0 | sort -z | xargs -0 sha256sum > "{{ chk_dir }}/{{ VERSION }}.sha256"
-		find . -type f -print0 | sort -z | xargs -0 sha512sum > "{{ chk_dir }}/{{ VERSION }}.sha512"
+		[ -d "$DIR" ] || mkdir "$DIR"
+		find . -type f -print0 | sort -z | xargs -0 b3sum > "$DIR/{{ VERSION }}.b3"
+		find . -type f -print0 | sort -z | xargs -0 md5sum > "$DIR/{{ VERSION }}.md5"
+		find . -type f -print0 | sort -z | xargs -0 sha256sum > "$DIR/{{ VERSION }}.sha256"
+		find . -type f -print0 | sort -z | xargs -0 sha512sum > "$DIR/{{ VERSION }}.sha512"
 
 		# Strip leading ./ from paths.
-		sd -s " ./" " " "{{ chk_dir }}/{{ VERSION }}.b3"
-		sd -s " ./" " " "{{ chk_dir }}/{{ VERSION }}.md5"
-		sd -s " ./" " " "{{ chk_dir }}/{{ VERSION }}.sha256"
-		sd -s " ./" " " "{{ chk_dir }}/{{ VERSION }}.sha512"
+		sd -s " ./" " " "$DIR/{{ VERSION }}.b3"
+		sd -s " ./" " " "$DIR/{{ VERSION }}.md5"
+		sd -s " ./" " " "$DIR/{{ VERSION }}.sha256"
+		sd -s " ./" " " "$DIR/{{ VERSION }}.sha512"
 	fi
 
 	cd "{{ justfile_directory() }}"
@@ -200,6 +221,7 @@ _hash-core VERSION:
 # Setup and Requirements Checks.
 _prereq:
 	#!/usr/bin/env bash
+	set -e
 
 	[ -d "{{ cache_dir }}" ] || mkdir "{{ cache_dir }}"
 	[ -d "{{ chk_dir }}" ] || mkdir "{{ chk_dir }}"
@@ -229,6 +251,7 @@ _prereq:
 # Make Sure Required App Exists.
 _prereq-app BIN:
 	#!/usr/bin/env bash
+	set -e
 
 	if [ -z "$( command -v {{ BIN }} )" ]; then
 		echo "Missing {{ BIN }}."
